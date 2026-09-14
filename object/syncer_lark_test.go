@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 
@@ -161,6 +162,79 @@ func TestLarkSyncerOAuthIdentity(t *testing.T) {
 		}
 		if user.Email == "" || user.Email != identity.Email {
 			t.Errorf("directory email %q does not match login email %q", user.Email, identity.Email)
+		}
+	}
+}
+
+func TestLarkSyncerPaginationPreservesOpaqueCursor(t *testing.T) {
+	// Feishu cursors are opaque and may contain reserved query characters.
+	// Both department enumeration and user enumeration must preserve them.
+	const cursor = "AQD9/Rn9e+next==&literal=%2B"
+	requests := make(map[string][]string)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		w.Header().Set("Content-Type", "application/json")
+		if query.Get("department_id_type") != "open_department_id" || query.Get("user_id_type") != "open_id" {
+			t.Error("expected explicit app-scoped user and department ID types")
+		}
+		if r.Header.Get("Authorization") != "Bearer test-token" {
+			t.Error("expected authorization on every page")
+		}
+		pageToken := query.Get("page_token")
+		requests[r.URL.Path] = append(requests[r.URL.Path], pageToken)
+		if pageToken != "" && pageToken != cursor {
+			t.Errorf("opaque cursor changed: got %q, expected %q", pageToken, cursor)
+			http.Error(w, "invalid cursor", http.StatusBadRequest)
+			return
+		}
+		first := pageToken == ""
+		var items interface{}
+		switch r.URL.Path {
+		case "/open-apis/contact/v3/departments":
+			if query.Get("parent_department_id") != "0" || query.Get("fetch_child") != "true" {
+				t.Error("expected recursive root department enumeration")
+			}
+			department := "od-2"
+			if first {
+				department = "od-1"
+			}
+			items = []map[string]string{{"open_department_id": department}}
+		case "/open-apis/contact/v3/users/find_by_department":
+			if query.Get("department_id") != "od-test" {
+				t.Error("department changed while paginating")
+			}
+			identity := "ou-2"
+			if first {
+				identity = "ou-1"
+			}
+			items = []map[string]string{{"open_id": identity}}
+		default:
+			http.NotFound(w, r)
+			return
+		}
+		json.NewEncoder(w).Encode(map[string]interface{}{"code": 0, "data": map[string]interface{}{
+			"items": items, "has_more": first, "page_token": cursor,
+		}})
+	}))
+	defer server.Close()
+	provider := &LarkSyncerProvider{Syncer: &Syncer{Organization: "built-in", Host: server.URL}}
+	departments, err := provider.getLarkDepartments("test-token")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(departments, []string{"0", "od-1", "od-2"}) {
+		t.Fatalf("missing department page: %v", departments)
+	}
+	users, err := provider.getLarkUsersFromDept("test-token", "od-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(users) != 2 || users[0].OpenId != "ou-1" || users[1].OpenId != "ou-2" {
+		t.Fatalf("missing user page: %v", users)
+	}
+	for path, cursors := range requests {
+		if !slices.Equal(cursors, []string{"", cursor}) {
+			t.Errorf("unexpected pages for %s: %v", path, cursors)
 		}
 	}
 }
