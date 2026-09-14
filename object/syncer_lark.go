@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/casdoor/casdoor/util"
@@ -183,10 +184,17 @@ func (p *LarkSyncerProvider) getLarkDepartments(accessToken string) ([]string, e
 	pageToken := ""
 
 	for {
-		apiUrl := fmt.Sprintf("%s/open-apis/contact/v3/departments?parent_department_id=0&fetch_child=true&page_size=50", domain)
-		if pageToken != "" {
-			apiUrl += fmt.Sprintf("&page_token=%s", pageToken)
+		query := url.Values{
+			"parent_department_id": {"0"},
+			"department_id_type":   {"open_department_id"},
+			"user_id_type":         {"open_id"},
+			"fetch_child":          {"true"},
+			"page_size":            {"50"},
 		}
+		if pageToken != "" {
+			query.Set("page_token", pageToken)
+		}
+		apiUrl := domain + "/open-apis/contact/v3/departments?" + query.Encode()
 
 		data, err := p.getWithAuth(apiUrl, accessToken)
 		if err != nil {
@@ -224,10 +232,16 @@ func (p *LarkSyncerProvider) getLarkUsersFromDept(accessToken string, deptId str
 	pageToken := ""
 
 	for {
-		apiUrl := fmt.Sprintf("%s/open-apis/contact/v3/users/find_by_department?department_id=%s&page_size=50", domain, deptId)
-		if pageToken != "" {
-			apiUrl += fmt.Sprintf("&page_token=%s", pageToken)
+		query := url.Values{
+			"department_id":      {deptId},
+			"department_id_type": {"open_department_id"},
+			"user_id_type":       {"open_id"},
+			"page_size":          {"50"},
 		}
+		if pageToken != "" {
+			query.Set("page_token", pageToken)
+		}
+		apiUrl := domain + "/open-apis/contact/v3/users/find_by_department?" + query.Encode()
 
 		data, err := p.getWithAuth(apiUrl, accessToken)
 		if err != nil {
