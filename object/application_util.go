@@ -489,6 +489,18 @@ func (application *Application) IsPasswordEnabled() bool {
 	return application.HasSigninMethod("Password")
 }
 
+// IsWebAuthnEnabled uses the configured methods when present, with the legacy
+// flag as a fallback for applications that have not been migrated yet.
+func (application *Application) IsWebAuthnEnabled() bool {
+	if application == nil {
+		return false
+	}
+	if len(application.SigninMethods) == 0 {
+		return application.EnableWebAuthn
+	}
+	return application.HasSigninMethod("WebAuthn")
+}
+
 func (application *Application) IsPasswordWithLdapEnabled() bool {
 	if len(application.SigninMethods) == 0 {
 		return application.EnablePassword

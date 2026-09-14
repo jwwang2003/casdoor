@@ -27,6 +27,69 @@ import (
 	"github.com/go-webauthn/webauthn/webauthn"
 )
 
+// checkWebAuthnPolicy checks the account's own application as well as the
+// requested client. Choosing another client must not enable a credential method
+// that the account's signup application has disabled.
+func checkWebAuthnPolicy(user *object.User, application, signupApplication *object.Application) error {
+	if user == nil {
+		return fmt.Errorf("WebAuthn user does not exist")
+	}
+	if user.IsForbidden || user.IsDeleted {
+		return fmt.Errorf("WebAuthn sign-in is disabled for this user")
+	}
+	for _, app := range []*object.Application{signupApplication, application} {
+		if app == nil {
+			return fmt.Errorf("WebAuthn application does not exist")
+		}
+		if user.Owner != "built-in" && user.Owner != app.Organization && !app.IsShared {
+			return fmt.Errorf("WebAuthn application does not belong to the user's organization")
+		}
+		if app.DisableSignin || (app.OrganizationObj != nil && app.OrganizationObj.DisableSignin) {
+			return fmt.Errorf("WebAuthn sign-in is disabled for this application")
+		}
+		if !app.IsWebAuthnEnabled() {
+			return fmt.Errorf("WebAuthn is not enabled for this application")
+		}
+	}
+	return nil
+}
+
+func getWebAuthnSignupApplication(user *object.User) (*object.Application, error) {
+	if user == nil {
+		return nil, fmt.Errorf("WebAuthn user does not exist")
+	}
+	application, err := object.GetApplicationByUser(user)
+	if err != nil {
+		return nil, err
+	}
+	if err = checkWebAuthnPolicy(user, application, application); err != nil {
+		return nil, err
+	}
+	return application, nil
+}
+
+func (c *ApiController) getWebAuthnApplication(user *object.User) (*object.Application, error) {
+	signupApplication, err := getWebAuthnSignupApplication(user)
+	if err != nil {
+		return nil, err
+	}
+	application := signupApplication
+	if c.Ctx.Input.Query("responseType") == ResponseTypeCode {
+		clientId := c.Ctx.Input.Query("clientId")
+		if clientId == "" {
+			return nil, fmt.Errorf("WebAuthn OAuth client is required")
+		}
+		application, err = object.GetApplicationByClientId(clientId)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if err = checkWebAuthnPolicy(user, application, signupApplication); err != nil {
+		return nil, err
+	}
+	return application, nil
+}
+
 // WebAuthnSignupBegin
 // @Title WebAuthnSignupBegin
 // @Tag User API
@@ -43,6 +106,10 @@ func (c *ApiController) WebAuthnSignupBegin() {
 	user := c.getCurrentUser()
 	if user == nil {
 		c.ResponseError(c.T("general:Please login first"))
+		return
+	}
+	if _, err = getWebAuthnSignupApplication(user); err != nil {
+		c.ResponseError(err.Error())
 		return
 	}
 
@@ -86,6 +153,10 @@ func (c *ApiController) WebAuthnSignupFinish() {
 	user := c.getCurrentUser()
 	if user == nil {
 		c.ResponseError(c.T("general:Please login first"))
+		return
+	}
+	if _, err = getWebAuthnSignupApplication(user); err != nil {
+		c.ResponseError(err.Error())
 		return
 	}
 	sessionObj := c.GetSession("registration")
@@ -146,6 +217,10 @@ func (c *ApiController) WebAuthnSigninBegin() {
 			c.ResponseError(fmt.Sprintf(c.T("general:The user: %s doesn't exist"), util.GetId(userOwner, userName)))
 			return
 		}
+		if _, err = getWebAuthnSignupApplication(user); err != nil {
+			c.ResponseError(err.Error())
+			return
+		}
 		if len(user.WebauthnCredentials) == 0 {
 			c.ResponseError(c.T("webauthn:Found no credentials for this user"))
 			return
@@ -172,7 +247,6 @@ func (c *ApiController) WebAuthnSigninBegin() {
 // @router /webauthn/signin/finish [post]
 func (c *ApiController) WebAuthnSigninFinish() {
 	responseType := c.Ctx.Input.Query("responseType")
-	clientId := c.Ctx.Input.Query("clientId")
 	webauthnObj, err := object.GetWebAuthnObject(c.Ctx.Request.Host)
 	if err != nil {
 		c.ResponseError(err.Error())
@@ -188,9 +262,16 @@ func (c *ApiController) WebAuthnSigninFinish() {
 	c.Ctx.Request.Body = io.NopCloser(bytes.NewBuffer(c.Ctx.Input.RequestBody))
 
 	var user *object.User
+	var application *object.Application
 	if sessionData.UserID != nil {
 		userId := string(sessionData.UserID)
 		user, err = object.GetUser(userId)
+		if err != nil {
+			c.ResponseError(err.Error())
+			return
+		}
+
+		application, err = c.getWebAuthnApplication(user)
 		if err != nil {
 			c.ResponseError(err.Error())
 			return
@@ -200,6 +281,10 @@ func (c *ApiController) WebAuthnSigninFinish() {
 	} else {
 		handler := func(rawID, userHandle []byte) (webauthn.User, error) {
 			user, err = object.GetUserByWebauthID(base64.StdEncoding.EncodeToString(rawID))
+			if err != nil {
+				return nil, err
+			}
+			application, err = c.getWebAuthnApplication(user)
 			if err != nil {
 				return nil, err
 			}
@@ -213,28 +298,14 @@ func (c *ApiController) WebAuthnSigninFinish() {
 		c.ResponseError(err.Error())
 		return
 	}
-	c.SetSessionUsername(user.GetId())
-	util.LogInfo(c.Ctx, "API: [%s] signed in", user.GetId())
-
-	var application *object.Application
-
-	if clientId != "" && (responseType == ResponseTypeCode) {
-		application, err = object.GetApplicationByClientId(clientId)
-	} else {
-		application, err = object.GetApplicationByUser(user)
-	}
-	if err != nil {
-		c.ResponseError(err.Error())
-		return
-	}
-	if application == nil {
-		c.ResponseError(c.T("check:Application does not exist"))
-		return
-	}
 
 	var authForm form.AuthForm
 	authForm.Type = responseType
+	authForm.SigninMethod = "WebAuthn"
 	resp := c.HandleLoggedIn(application, user, &authForm)
+	if resp == nil {
+		return
+	}
 	c.Data["json"] = resp
 	c.ServeJSON()
 }
