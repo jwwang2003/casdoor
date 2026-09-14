@@ -526,7 +526,7 @@ export default function UserEditPage({self}: {self?: boolean} = {}) {
       </AccountItemRow>
     ),
     "Title": (
-      <AccountItemRow name="Title" labelKey="general:Title">
+      <AccountItemRow name="Title" labelKey="user:Job title">
         <Input value={user.title ?? ""} onChange={(e) => updateField("title", e.target.value)} />
       </AccountItemRow>
     ),
