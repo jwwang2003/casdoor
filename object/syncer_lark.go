@@ -330,7 +330,8 @@ func (p *LarkSyncerProvider) getLarkUsers() ([]*OriginalUser, error) {
 		return nil, err
 	}
 
-	// Get users from all departments (deduplicate by user_id)
+	// Match the OAuth provider's app-scoped open_id, which is also available
+	// when the app cannot read user_id. Both providers must use the same app.
 	userMap := make(map[string]*LarkUser)
 	for _, deptId := range deptIds {
 		users, err := p.getLarkUsersFromDept(accessToken, deptId)
@@ -339,9 +340,11 @@ func (p *LarkSyncerProvider) getLarkUsers() ([]*OriginalUser, error) {
 		}
 
 		for _, user := range users {
-			// Deduplicate users by user_id
-			if _, exists := userMap[user.UserId]; !exists {
-				userMap[user.UserId] = user
+			if user == nil || user.OpenId == "" {
+				return nil, fmt.Errorf("Lark user in department %s is missing open_id; refusing an incomplete identity snapshot", deptId)
+			}
+			if _, exists := userMap[user.OpenId]; !exists {
+				userMap[user.OpenId] = user
 			}
 		}
 	}
@@ -395,23 +398,32 @@ func (p *LarkSyncerProvider) larkUserToOriginalUser(larkUser *LarkUser) *Origina
 		userName = larkUser.OpenId
 	}
 
+	// Keep existing user_id-based IDs stable; use the same fallback as the
+	// OAuth username when user_id is unavailable instead of an empty ID.
+	email := larkUser.Email
+	if email == "" {
+		email = larkUser.EnterpriseEmail
+	}
+
 	user := &OriginalUser{
-		Id:          larkUser.UserId,
+		Id:          userName,
 		Name:        userName,
 		DisplayName: larkUser.Name,
-		Email:       larkUser.Email,
+		Email:       email,
 		Phone:       larkUser.Mobile,
 		Title:       larkUser.JobTitle,
 		Address:     []string{},
 		Properties:  map[string]string{},
 		Groups:      []string{},
-		Lark:        larkUser.UserId, // Link Lark provider account
+		Lark:        larkUser.OpenId, // Must match idp.LarkIdProvider's UserInfo.Id.
 	}
 
 	// TableColumns can override individual fields, e.g. map
 	// enterprise_email -> Email on tenants that only have an enterprise mailbox.
+	// Empty values are skipped so the default columns (user_id -> Id, email -> Email)
+	// cannot blank the fallbacks above when the app cannot read those fields.
 	for _, tableColumn := range p.Syncer.TableColumns {
-		if value, ok := p.getLarkUserFieldValue(larkUser, tableColumn.Name); ok {
+		if value, ok := p.getLarkUserFieldValue(larkUser, tableColumn.Name); ok && value != "" {
 			p.Syncer.setUserByKeyValue(user, tableColumn.CasdoorName, value)
 		}
 	}
