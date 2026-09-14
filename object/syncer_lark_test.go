@@ -16,6 +16,7 @@ package object
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -236,6 +237,60 @@ func TestLarkSyncerPaginationPreservesOpaqueCursor(t *testing.T) {
 		if !slices.Equal(cursors, []string{"", cursor}) {
 			t.Errorf("unexpected pages for %s: %v", path, cursors)
 		}
+	}
+}
+
+func TestLarkSyncerPaginationRejectsBrokenCursors(t *testing.T) {
+	cases := []struct {
+		name      string
+		pageToken func(page int) string
+		wantErr   string
+		wantPages int
+	}{
+		{"missing token", func(int) string { return "" }, "without a page_token", 1},
+		{"repeated token", func(int) string { return "same-cursor" }, "repeated a page_token", 2},
+		{"too many pages", func(page int) string { return fmt.Sprintf("cursor-%d", page) }, fmt.Sprintf("exceeded %d pages", larkMaxPages), larkMaxPages},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Requests are sequential, so the counter needs no locking.
+			pages := map[string]int{}
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				pages[r.URL.Path]++
+				var items interface{}
+				switch r.URL.Path {
+				case "/open-apis/contact/v3/departments":
+					items = []map[string]string{{"open_department_id": "od-1"}}
+				case "/open-apis/contact/v3/users/find_by_department":
+					items = []map[string]string{{"open_id": "ou-1"}}
+				default:
+					http.NotFound(w, r)
+					return
+				}
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(map[string]interface{}{"code": 0, "data": map[string]interface{}{
+					"items": items, "has_more": true, "page_token": tc.pageToken(pages[r.URL.Path]),
+				}})
+			}))
+			defer server.Close()
+			provider := &LarkSyncerProvider{Syncer: &Syncer{Organization: "built-in", Host: server.URL}}
+			departments, err := provider.getLarkDepartments("test-token")
+			if err == nil || !strings.Contains(err.Error(), tc.wantErr) || departments != nil {
+				t.Errorf("departments: expected an error containing %q without partial results, got departments=%v err=%v", tc.wantErr, departments, err)
+			}
+			users, err := provider.getLarkUsersFromDept("test-token", "od-1")
+			if err == nil || !strings.Contains(err.Error(), tc.wantErr) || users != nil {
+				t.Errorf("users: expected an error containing %q without partial results, got users=%v err=%v", tc.wantErr, users, err)
+			}
+			if len(pages) != 2 {
+				t.Errorf("expected both endpoints to be paginated, got %v", pages)
+			}
+			for path, count := range pages {
+				if count != tc.wantPages {
+					t.Errorf("%s: expected the listing to stop after %d pages, requested %d", path, tc.wantPages, count)
+				}
+			}
+		})
 	}
 }
 
