@@ -177,13 +177,32 @@ func (p *LarkSyncerProvider) getLarkAccessToken() (string, error) {
 	return tokenResp.TenantAccessToken, nil
 }
 
+// larkMaxPages bounds a paginated listing so a misbehaving API cannot keep the syncer busy forever.
+const larkMaxPages = 10000
+
+// checkLarkPageToken validates the cursor of a page that reported has_more and records it in seen.
+func checkLarkPageToken(seen map[string]bool, pageToken string, page int, listing string) error {
+	if pageToken == "" {
+		return fmt.Errorf("Lark %s listing reported has_more without a page_token on page %d", listing, page)
+	}
+	if seen[pageToken] {
+		return fmt.Errorf("Lark %s listing repeated a page_token on page %d", listing, page)
+	}
+	if page >= larkMaxPages {
+		return fmt.Errorf("Lark %s listing exceeded %d pages", listing, larkMaxPages)
+	}
+	seen[pageToken] = true
+	return nil
+}
+
 // getLarkDepartments gets all open department IDs from Lark API
 func (p *LarkSyncerProvider) getLarkDepartments(accessToken string) ([]string, error) {
 	domain := p.getLarkDomain()
 	allOpenDeptIds := []string{"0"} // Start with root department
 	pageToken := ""
+	seenTokens := map[string]bool{}
 
-	for {
+	for page := 1; ; page++ {
 		query := url.Values{
 			"parent_department_id": {"0"},
 			"department_id_type":   {"open_department_id"},
@@ -220,6 +239,10 @@ func (p *LarkSyncerProvider) getLarkDepartments(accessToken string) ([]string, e
 			break
 		}
 		pageToken = deptResp.Data.PageToken
+		err = checkLarkPageToken(seenTokens, pageToken, page, "department")
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return allOpenDeptIds, nil
@@ -230,8 +253,9 @@ func (p *LarkSyncerProvider) getLarkUsersFromDept(accessToken string, deptId str
 	domain := p.getLarkDomain()
 	allUsers := []*LarkUser{}
 	pageToken := ""
+	seenTokens := map[string]bool{}
 
-	for {
+	for page := 1; ; page++ {
 		query := url.Values{
 			"department_id":      {deptId},
 			"department_id_type": {"open_department_id"},
@@ -265,6 +289,10 @@ func (p *LarkSyncerProvider) getLarkUsersFromDept(accessToken string, deptId str
 			break
 		}
 		pageToken = userResp.Data.PageToken
+		err = checkLarkPageToken(seenTokens, pageToken, page, fmt.Sprintf("department %s user", deptId))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return allUsers, nil

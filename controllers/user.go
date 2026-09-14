@@ -314,12 +314,20 @@ func (c *ApiController) UpdateUser() {
 	}
 
 	if columnsStr != "" {
-		mergedUser := *oldUser
-		if err = json.Unmarshal(c.Ctx.Input.RequestBody, &mergedUser); err != nil {
+		// Decode into a deep copy: a plain struct copy shares maps and slices
+		// with oldUser, so the body would rewrite the snapshot the permission
+		// checks below compare against.
+		var mergedUser *object.User
+		mergedUser, err = oldUser.DeepCopy()
+		if err != nil {
 			c.ResponseError(err.Error())
 			return
 		}
-		user = mergedUser
+		if err = json.Unmarshal(c.Ctx.Input.RequestBody, mergedUser); err != nil {
+			c.ResponseError(err.Error())
+			return
+		}
+		user = *mergedUser
 	}
 
 	if oldUser.Owner == "built-in" && oldUser.Name == "admin" && (user.Owner != "built-in" || user.Name != "admin") {

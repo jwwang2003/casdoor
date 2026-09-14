@@ -83,7 +83,7 @@ func (syncer *Syncer) syncUsers() error {
 
 		if _, ok := myUsers[primary]; !ok {
 			newUser := syncer.createUserFromOriginalUser(oUser, affiliationMap)
-			fmt.Printf("New user: %v\n", newUser)
+			fmt.Printf("New user: %s\n", newUser.GetId())
 			newUsers = append(newUsers, newUser)
 		} else {
 			user := myUsers[primary]
@@ -94,7 +94,7 @@ func (syncer *Syncer) syncUsers() error {
 					updatedUser.Hash = oHash
 					updatedUser.PreHash = oHash
 
-					fmt.Printf("Update from oUser to user: %v\n", updatedUser)
+					fmt.Printf("Update from oUser to user: %s\n", updatedUser.GetId())
 					_, err = syncer.updateUserForOriginalFields(updatedUser, key)
 					if err != nil {
 						return err
@@ -105,7 +105,7 @@ func (syncer *Syncer) syncUsers() error {
 					if !syncer.IsReadOnly {
 						updatedOUser := syncer.createOriginalUserFromUser(user)
 
-						fmt.Printf("Update from user to oUser: %v\n", updatedOUser)
+						fmt.Printf("Update from user to oUser: %s\n", updatedOUser.GetId())
 						_, err = syncer.updateUser(updatedOUser)
 						if err != nil {
 							return err
@@ -131,7 +131,7 @@ func (syncer *Syncer) syncUsers() error {
 						updatedUser.Hash = oHash
 						updatedUser.PreHash = oHash
 
-						fmt.Printf("Update from oUser to user (2nd condition): %v\n", updatedUser)
+						fmt.Printf("Update from oUser to user (2nd condition): %s\n", updatedUser.GetId())
 						_, err = syncer.updateUserForOriginalFields(updatedUser, key)
 						if err != nil {
 							return err
@@ -143,6 +143,7 @@ func (syncer *Syncer) syncUsers() error {
 	}
 
 	if len(newUsers) != 0 {
+		fmt.Printf("New users: %d\n", len(newUsers))
 		_, err = AddUsersInBatch(newUsers)
 		if err != nil {
 			return err
@@ -160,7 +161,7 @@ func (syncer *Syncer) syncUsers() error {
 			if _, ok := myOUsers[primary]; !ok {
 				newOUser := syncer.createOriginalUserFromUser(user)
 
-				fmt.Printf("New oUser: %v\n", newOUser)
+				fmt.Printf("New oUser: %s\n", newOUser.GetId())
 				_, err = syncer.addUser(newOUser)
 				if err != nil {
 					return err
