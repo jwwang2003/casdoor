@@ -1,4 +1,5 @@
 import {Languages} from "lucide-react";
+import i18next from "i18next";
 import {Button} from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -32,7 +33,7 @@ export function LanguageSelect({languages, className, onLanguageChange}: Languag
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="iconSm" className={className} aria-label="Language">
+        <Button variant="ghost" size="iconSm" className={className} aria-label={i18next.t("user:Language")}>
           <Languages />
         </Button>
       </DropdownMenuTrigger>
