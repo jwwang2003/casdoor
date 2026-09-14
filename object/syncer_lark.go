@@ -74,18 +74,19 @@ type LarkAccessTokenResp struct {
 }
 
 type LarkUser struct {
-	UserId        string      `json:"user_id"`
-	UnionId       string      `json:"union_id"`
-	OpenId        string      `json:"open_id"`
-	Name          string      `json:"name"`
-	EnName        string      `json:"en_name"`
-	Email         string      `json:"email"`
-	Mobile        string      `json:"mobile"`
-	Gender        int         `json:"gender"`
-	Avatar        *LarkAvatar `json:"avatar"`
-	Status        *LarkStatus `json:"status"`
-	DepartmentIds []string    `json:"department_ids"`
-	JobTitle      string      `json:"job_title"`
+	UserId          string      `json:"user_id"`
+	UnionId         string      `json:"union_id"`
+	OpenId          string      `json:"open_id"`
+	Name            string      `json:"name"`
+	EnName          string      `json:"en_name"`
+	Email           string      `json:"email"`
+	EnterpriseEmail string      `json:"enterprise_email"`
+	Mobile          string      `json:"mobile"`
+	Gender          int         `json:"gender"`
+	Avatar          *LarkAvatar `json:"avatar"`
+	Status          *LarkStatus `json:"status"`
+	DepartmentIds   []string    `json:"department_ids"`
+	JobTitle        string      `json:"job_title"`
 }
 
 type LarkAvatar struct {
@@ -329,7 +330,8 @@ func (p *LarkSyncerProvider) getLarkUsers() ([]*OriginalUser, error) {
 		return nil, err
 	}
 
-	// Get users from all departments (deduplicate by user_id)
+	// Match the OAuth provider's app-scoped open_id, which is also available
+	// when the app cannot read user_id. Both providers must use the same app.
 	userMap := make(map[string]*LarkUser)
 	for _, deptId := range deptIds {
 		users, err := p.getLarkUsersFromDept(accessToken, deptId)
@@ -338,9 +340,11 @@ func (p *LarkSyncerProvider) getLarkUsers() ([]*OriginalUser, error) {
 		}
 
 		for _, user := range users {
-			// Deduplicate users by user_id
-			if _, exists := userMap[user.UserId]; !exists {
-				userMap[user.UserId] = user
+			if user == nil || user.OpenId == "" {
+				return nil, fmt.Errorf("Lark user in department %s is missing open_id; refusing an incomplete identity snapshot", deptId)
+			}
+			if _, exists := userMap[user.OpenId]; !exists {
+				userMap[user.OpenId] = user
 			}
 		}
 	}
@@ -366,17 +370,24 @@ func (p *LarkSyncerProvider) larkUserToOriginalUser(larkUser *LarkUser) *Origina
 		userName = larkUser.OpenId
 	}
 
+	// Keep existing user_id-based IDs stable; use the same fallback as the
+	// OAuth username when user_id is unavailable instead of an empty ID.
+	email := larkUser.Email
+	if email == "" {
+		email = larkUser.EnterpriseEmail
+	}
+
 	user := &OriginalUser{
-		Id:          larkUser.UserId,
+		Id:          userName,
 		Name:        userName,
 		DisplayName: larkUser.Name,
-		Email:       larkUser.Email,
+		Email:       email,
 		Phone:       larkUser.Mobile,
 		Title:       larkUser.JobTitle,
 		Address:     []string{},
 		Properties:  map[string]string{},
 		Groups:      []string{},
-		Lark:        larkUser.UserId, // Link Lark provider account
+		Lark:        larkUser.OpenId, // Must match idp.LarkIdProvider's UserInfo.Id.
 	}
 
 	// Set avatar if available

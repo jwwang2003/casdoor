@@ -169,10 +169,17 @@ type LarkUserInfo struct {
 }
 
 func (idp *LarkIdProvider) GetUserInfo(token *oauth2.Token) (*UserInfo, error) {
+	if token == nil {
+		return nil, fmt.Errorf("Lark authorization token is required")
+	}
+	code, ok := token.Extra("code").(string)
+	if !ok || code == "" {
+		return nil, fmt.Errorf("Lark authorization code is required")
+	}
 	body := &struct {
 		GrantType string `json:"grant_type"`
 		Code      string `json:"code"`
-	}{"authorization_code", token.Extra("code").(string)}
+	}{"authorization_code", code}
 
 	data, err := json.Marshal(body)
 	if err != nil {
@@ -193,6 +200,9 @@ func (idp *LarkIdProvider) GetUserInfo(token *oauth2.Token) (*UserInfo, error) {
 	}
 
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Lark user info request failed: HTTP %d", resp.StatusCode)
+	}
 	data, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -202,6 +212,12 @@ func (idp *LarkIdProvider) GetUserInfo(token *oauth2.Token) (*UserInfo, error) {
 	err = json.Unmarshal(data, &larkUserInfo)
 	if err != nil {
 		return nil, err
+	}
+	if larkUserInfo.Code != 0 {
+		return nil, fmt.Errorf("Lark user info request failed: code=%d", larkUserInfo.Code)
+	}
+	if larkUserInfo.Data.OpenId == "" {
+		return nil, fmt.Errorf("Lark user info is missing open_id")
 	}
 
 	// Use enterprise_email as fallback when email is empty
