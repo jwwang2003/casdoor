@@ -47,7 +47,7 @@ interface BaseField {
 }
 
 export type EditField =
-  | (BaseField & {type: "text" | "password" | "email" | "url"})
+  | (BaseField & {type: "text" | "password" | "email" | "url"; placeholder?: string | ((ctx: Ctx) => string | undefined)})
   | (BaseField & {type: "number"; step?: string; min?: number; max?: number; suffix?: React.ReactNode})
   | (BaseField & {type: "textarea"; rows?: number; placeholder?: string})
   | (BaseField & {type: "switch"})
@@ -317,6 +317,7 @@ export function SimpleEditPage({
         <Input
           type={field.type === "text" ? "text" : field.type}
           disabled={disabled}
+          placeholder={typeof field.placeholder === "function" ? field.placeholder(ctx) : field.placeholder}
           value={value ?? ""}
           onChange={(e) => set(e.target.value)}
         />

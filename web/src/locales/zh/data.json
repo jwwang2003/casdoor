@@ -1587,6 +1587,8 @@
   },
   "syncer": {
     "API Token / Password": "API令牌 / 密码",
+    "API endpoint": "接口地址",
+    "API endpoint - Tooltip": "飞书开放平台接口地址。留空则使用Lark国际版（https://open.larksuite.com），飞书中国版租户必须填写https://open.feishu.cn",
     "AWS Access Key ID": "AWS访问密钥ID",
     "AWS Region": "AWS区域",
     "AWS Secret Access Key": "AWS秘密访问密钥",
@@ -1616,6 +1618,8 @@
     "Is read-only - Tooltip": "启用后，此同步器来源的数据只读取不写回",
     "New Syncer": "添加同步器",
     "Paste your Google Workspace service account JSON key here": "请在此粘贴您的Google Workspace服务账户JSON密钥",
+    "Root department IDs": "根部门ID",
+    "Root department IDs - Tooltip": "要同步的部门（含子部门），多个用英文逗号分隔。每项可以是open_department_id（以od-开头）或自定义部门ID。留空则同步飞书应用可见的全部部门。填写的部门必须在应用的通讯录权限范围内。部门会同步为群组。不在这些部门中的人员会被视为已从通讯录中移除，只读同步器会禁用它为这些人员创建的账号，因此请先使用“测试连接”检查部门ID",
     "SCIM Server URL": "SCIM服务器URL",
     "SSH host": "SSH主机",
     "SSH host key": "SSH 主机密钥",

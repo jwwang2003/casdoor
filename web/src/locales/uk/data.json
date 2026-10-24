@@ -1587,6 +1587,8 @@
   },
   "syncer": {
     "API Token / Password": "Токен API / Пароль",
+    "API endpoint": "Кінцева точка API",
+    "API endpoint - Tooltip": "Кінцева точка API Lark Open Platform. Залиште порожнім для міжнародної версії Lark (https://open.larksuite.com); орендарі Feishu у Китаї мають вказати https://open.feishu.cn",
     "AWS Access Key ID": "Ідентифікатор ключа доступу AWS",
     "AWS Region": "Регіон AWS",
     "AWS Secret Access Key": "Секретний ключ доступу AWS",
@@ -1616,6 +1618,8 @@
     "Is read-only - Tooltip": "Лише для читання – підказка",
     "New Syncer": "Новий синхронізатор",
     "Paste your Google Workspace service account JSON key here": "Вставте сюди JSON-ключ службового облікового запису Google Workspace",
+    "Root department IDs": "ID кореневих відділів",
+    "Root department IDs - Tooltip": "Відділи для синхронізації разом із їхніми підвідділами, розділені комами. Кожен — це open_department_id (починається з od-) або власний ID відділу. Залиште порожнім, щоб синхронізувати всі відділи, які бачить застосунок Lark. Вказані відділи мають входити до області дозволів на контакти застосунку. Відділи синхронізуються як групи. Люди поза цими відділами вважаються видаленими з каталогу, а синхронізатор лише для читання блокує облікові записи, які він для них створив, тож спершу перевірте ID за допомогою «Перевірити підключення»",
     "SCIM Server URL": "URL сервера SCIM",
     "SSH host": "Хост SSH",
     "SSH host key": "Ключ хоста SSH",

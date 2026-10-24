@@ -1587,6 +1587,8 @@
   },
   "syncer": {
     "API Token / Password": "APIトークン / パスワード",
+    "API endpoint": "APIエンドポイント",
+    "API endpoint - Tooltip": "Lark Open PlatformのAPIエンドポイント。空欄の場合はLark国際版（https://open.larksuite.com）を使用します。Feishu（中国版）のテナントはhttps://open.feishu.cnを設定する必要があります",
     "AWS Access Key ID": "AWS アクセスキー ID",
     "AWS Region": "AWS リージョン",
     "AWS Secret Access Key": "AWS シークレットアクセスキー",
@@ -1616,6 +1618,8 @@
     "Is read-only - Tooltip": "読み取り専用か - ツールチップ",
     "New Syncer": "新しいシンクロナイザー",
     "Paste your Google Workspace service account JSON key here": "ここにGoogle WorkspaceサービスアカウントのJSONキーを貼り付けてください",
+    "Root department IDs": "ルート部門ID",
+    "Root department IDs - Tooltip": "同期する部門（配下の部門を含む）をカンマ区切りで指定します。各項目はopen_department_id（od-で始まる）またはカスタム部門IDです。空欄の場合はLarkアプリから参照できるすべての部門を同期します。指定する部門はアプリの連絡先権限範囲内にある必要があります。部門はグループとして同期されます。これらの部門に属さないユーザーはディレクトリから削除されたものとして扱われ、読み取り専用の同期ツールはそのユーザー用に作成したアカウントを禁止します。事前に「接続をテスト」でIDを確認してください",
     "SCIM Server URL": "SCIMサーバーURL",
     "SSH host": "SSHホスト",
     "SSH host key": "SSH ホスト鍵",

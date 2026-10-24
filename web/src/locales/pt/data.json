@@ -1587,6 +1587,8 @@
   },
   "syncer": {
     "API Token / Password": "Token de API / Senha",
+    "API endpoint": "Ponto de extremidade da API",
+    "API endpoint - Tooltip": "Ponto de extremidade da API da Lark Open Platform. Deixe vazio para usar o Lark internacional (https://open.larksuite.com); os locatários do Feishu na China devem definir https://open.feishu.cn",
     "AWS Access Key ID": "ID da chave de acesso AWS",
     "AWS Region": "Região da AWS",
     "AWS Secret Access Key": "Chave de acesso secreta da AWS",
@@ -1616,6 +1618,8 @@
     "Is read-only - Tooltip": "Dica: é somente leitura",
     "New Syncer": "Novo Syncer",
     "Paste your Google Workspace service account JSON key here": "Cole aqui a chave JSON da conta de serviço do Google Workspace",
+    "Root department IDs": "IDs dos departamentos raiz",
+    "Root department IDs - Tooltip": "Departamentos a sincronizar, incluindo seus subdepartamentos, separados por vírgulas. Cada um é um open_department_id (começa com od-) ou um ID de departamento personalizado. Deixe vazio para sincronizar todos os departamentos que o aplicativo Lark pode ver. Os departamentos informados devem estar dentro do escopo de permissão de contatos do aplicativo. Os departamentos são sincronizados como grupos. As pessoas fora desses departamentos são tratadas como removidas do diretório, e um sincronizador somente leitura marca como proibidas as contas que criou para elas, portanto use \"Testar conexão\" para verificar os IDs primeiro",
     "SCIM Server URL": "URL do servidor SCIM",
     "SSH host": "Host SSH",
     "SSH host key": "Chave de host SSH",

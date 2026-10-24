@@ -1587,6 +1587,8 @@
   },
   "syncer": {
     "API Token / Password": "Token API / Hasło",
+    "API endpoint": "Punkt końcowy API",
+    "API endpoint - Tooltip": "Punkt końcowy API Lark Open Platform. Pozostaw puste, aby używać międzynarodowej wersji Lark (https://open.larksuite.com); dzierżawcy Feishu w Chinach muszą ustawić https://open.feishu.cn",
     "AWS Access Key ID": "Identyfikator klucza dostępu AWS",
     "AWS Region": "Region AWS",
     "AWS Secret Access Key": "Tajny klucz dostępu AWS",
@@ -1616,6 +1618,8 @@
     "Is read-only - Tooltip": "Tylko do odczytu - etykietka",
     "New Syncer": "Nowy synchronizator",
     "Paste your Google Workspace service account JSON key here": "Wklej tutaj klucz JSON konta usługi Google Workspace",
+    "Root department IDs": "Identyfikatory działów głównych",
+    "Root department IDs - Tooltip": "Działy do synchronizacji wraz z ich poddziałami, oddzielone przecinkami. Każdy to open_department_id (zaczyna się od od-) lub niestandardowy identyfikator działu. Pozostaw puste, aby zsynchronizować wszystkie działy widoczne dla aplikacji Lark. Podane działy muszą należeć do zakresu uprawnień do kontaktów aplikacji. Działy są synchronizowane jako grupy. Osoby spoza tych działów są traktowane jako usunięte z katalogu, a synchronizator tylko do odczytu blokuje konta, które dla nich utworzył, dlatego najpierw sprawdź identyfikatory za pomocą \"Testuj połączenie\"",
     "SCIM Server URL": "URL serwera SCIM",
     "SSH host": "Host SSH",
     "SSH host key": "Klucz hosta SSH",

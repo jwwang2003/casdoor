@@ -192,8 +192,8 @@ func TestLarkSyncerPaginationPreservesOpaqueCursor(t *testing.T) {
 		var items interface{}
 		switch r.URL.Path {
 		case "/open-apis/contact/v3/departments":
-			if query.Get("parent_department_id") != "0" || query.Get("fetch_child") != "true" {
-				t.Error("expected recursive root department enumeration")
+			if query.Get("parent_department_id") != "0" || query.Get("fetch_child") != "false" {
+				t.Error("expected direct child enumeration of the root department")
 			}
 			department := "od-2"
 			if first {
@@ -219,11 +219,11 @@ func TestLarkSyncerPaginationPreservesOpaqueCursor(t *testing.T) {
 	}))
 	defer server.Close()
 	provider := &LarkSyncerProvider{Syncer: &Syncer{Organization: "built-in", Host: server.URL}}
-	departments, err := provider.getLarkDepartments("test-token")
+	departments, err := provider.getLarkChildDepartments("test-token", "0")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !slices.Equal(departments, []string{"0", "od-1", "od-2"}) {
+	if len(departments) != 2 || departments[0].OpenDepartmentId != "od-1" || departments[1].OpenDepartmentId != "od-2" {
 		t.Fatalf("missing department page: %v", departments)
 	}
 	users, err := provider.getLarkUsersFromDept("test-token", "od-test")

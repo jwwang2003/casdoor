@@ -1587,6 +1587,8 @@
   },
   "syncer": {
     "API Token / Password": "API jetonu / Parola",
+    "API endpoint": "API uç noktası",
+    "API endpoint - Tooltip": "Lark Open Platform API uç noktası. Lark uluslararası sürümü (https://open.larksuite.com) için boş bırakın; Çin'deki Feishu kiracıları https://open.feishu.cn adresini ayarlamalıdır",
     "AWS Access Key ID": "AWS erişim anahtarı kimliği",
     "AWS Region": "AWS bölgesi",
     "AWS Secret Access Key": "AWS gizli erişim anahtarı",
@@ -1616,6 +1618,8 @@
     "Is read-only - Tooltip": "Salt okunur mu - Araç ipucu",
     "New Syncer": "Yeni Senkronizatör",
     "Paste your Google Workspace service account JSON key here": "Google Workspace hizmet hesabı JSON anahtarınızı buraya yapıştırın",
+    "Root department IDs": "Kök departman kimlikleri",
+    "Root department IDs - Tooltip": "Alt departmanlarıyla birlikte senkronize edilecek departmanlar, virgülle ayrılmış. Her biri bir open_department_id (od- ile başlar) veya özel bir departman kimliğidir. Lark uygulamasının görebildiği tüm departmanları senkronize etmek için boş bırakın. Belirtilen departmanlar uygulamanın kişi izin kapsamında olmalıdır. Departmanlar grup olarak senkronize edilir. Bu departmanların dışındaki kişiler dizinden kaldırılmış sayılır ve salt okunur bir senkronizatör onlar için oluşturduğu hesapları yasaklar; bu nedenle kimlikleri önce \"Bağlantıyı Test Et\" ile kontrol edin",
     "SCIM Server URL": "SCIM sunucu URL'si",
     "SSH host": "SSH sunucusu",
     "SSH host key": "SSH ana bilgisayar anahtarı",

@@ -65,8 +65,13 @@ type Syncer struct {
 	IsReadOnly       bool           `json:"isReadOnly"`
 	IsEnabled        bool           `json:"isEnabled"`
 
+	RootDepartmentIds string `xorm:"text" json:"rootDepartmentIds"`
+
 	Ormer     *Ormer      `xorm:"-" json:"-"`
 	SshClient *ssh.Client `xorm:"-" json:"-"`
+
+	// Set by the Lark group sync of a run and consumed by its user sync
+	larkDepartments *larkDepartmentSnapshot
 }
 
 func GetSyncerCount(owner, organization, field, value string) (int64, error) {

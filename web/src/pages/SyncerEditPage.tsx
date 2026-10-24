@@ -36,7 +36,7 @@ const API_TYPES = [
 ];
 
 /** these have no host at all: the SDK knows the endpoint */
-const NO_HOST_TYPES = ["WeCom", "DingTalk", "Lark"];
+const NO_HOST_TYPES = ["WeCom", "DingTalk"];
 
 const isApiType = (type: string) => API_TYPES.includes(type);
 
@@ -75,6 +75,7 @@ function passwordLabelKey(type: string): string {
 
 function hostLabelKey(type: string): string {
   switch (type) {
+  case "Lark": return "syncer:API endpoint";
   case "Azure AD": return "provider:Tenant ID";
   case "Google Workspace": return "syncer:Admin Email";
   case "Active Directory": return "ldap:Server";
@@ -135,7 +136,15 @@ export default function SyncerEditPage() {
       type: "text",
       name: "host",
       labelKey: (ctx) => hostLabelKey(ctx.record.type),
+      // empty already means Lark international, so the hint is the value Feishu China has to set
+      placeholder: (ctx) => (ctx.record.type === "Lark" ? "https://open.feishu.cn" : undefined),
       when: (ctx) => !NO_HOST_TYPES.includes(ctx.record.type),
+    },
+    {
+      type: "text",
+      name: "rootDepartmentIds",
+      labelKey: "syncer:Root department IDs",
+      when: (ctx) => ctx.record.type === "Lark",
     },
     {
       type: "number",

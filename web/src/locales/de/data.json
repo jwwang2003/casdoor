@@ -1587,6 +1587,8 @@
   },
   "syncer": {
     "API Token / Password": "API-Token / Passwort",
+    "API endpoint": "API-Endpunkt",
+    "API endpoint - Tooltip": "API-Endpunkt der Lark Open Platform. Leer lassen für Lark international (https://open.larksuite.com); Feishu-Mandanten in China müssen https://open.feishu.cn angeben",
     "AWS Access Key ID": "AWS-Zugriffsschlüssel-ID",
     "AWS Region": "AWS-Region",
     "AWS Secret Access Key": "AWS-Geheimer Zugriffsschlüssel",
@@ -1616,6 +1618,8 @@
     "Is read-only - Tooltip": "Nur lesbar",
     "New Syncer": "Neuer Syncer",
     "Paste your Google Workspace service account JSON key here": "Fügen Sie hier Ihren Google Workspace Service-Account-JSON-Schlüssel ein",
+    "Root department IDs": "Stammabteilungs-IDs",
+    "Root department IDs - Tooltip": "Zu synchronisierende Abteilungen einschließlich ihrer Unterabteilungen, durch Kommas getrennt. Jeder Eintrag ist eine open_department_id (beginnt mit od-) oder eine benutzerdefinierte Abteilungs-ID. Leer lassen, um alle Abteilungen zu synchronisieren, die die Lark-App sehen kann. Angegebene Abteilungen müssen im Kontaktberechtigungsbereich der App liegen. Abteilungen werden als Gruppen synchronisiert. Personen außerhalb dieser Abteilungen gelten als aus dem Verzeichnis entfernt, und ein schreibgeschützter Syncer sperrt die Konten, die er für sie angelegt hat. Prüfen Sie die IDs daher zuerst mit „Verbindung testen“",
     "SCIM Server URL": "SCIM-Server-URL",
     "SSH host": "SSH-Host",
     "SSH host key": "SSH-Hostschlüssel",

@@ -1587,6 +1587,8 @@
   },
   "syncer": {
     "API Token / Password": "Mã thông báo API / Mật khẩu",
+    "API endpoint": "Điểm cuối API",
+    "API endpoint - Tooltip": "Điểm cuối API của Lark Open Platform. Để trống để dùng Lark quốc tế (https://open.larksuite.com); tổ chức Feishu tại Trung Quốc phải đặt https://open.feishu.cn",
     "AWS Access Key ID": "ID khóa truy cập AWS",
     "AWS Region": "Vùng AWS",
     "AWS Secret Access Key": "Khóa truy cập bí mật AWS",
@@ -1616,6 +1618,8 @@
     "Is read-only - Tooltip": "Chỉ có thể đọc, không thể chỉnh sửa",
     "New Syncer": "Đồng bộ mới",
     "Paste your Google Workspace service account JSON key here": "Dán khóa JSON tài khoản dịch vụ Google Workspace của bạn tại đây",
+    "Root department IDs": "ID phòng ban gốc",
+    "Root department IDs - Tooltip": "Các phòng ban cần đồng bộ, bao gồm cả phòng ban con, phân tách bằng dấu phẩy. Mỗi mục là một open_department_id (bắt đầu bằng od-) hoặc ID phòng ban tùy chỉnh. Để trống để đồng bộ tất cả phòng ban mà ứng dụng Lark có thể thấy. Các phòng ban được liệt kê phải nằm trong phạm vi quyền danh bạ của ứng dụng. Phòng ban được đồng bộ thành nhóm. Những người không thuộc các phòng ban này được coi là đã bị xóa khỏi danh bạ, và công cụ đồng bộ chỉ đọc sẽ cấm các tài khoản mà nó đã tạo cho họ, vì vậy hãy dùng \"Kiểm tra kết nối\" để kiểm tra các ID trước",
     "SCIM Server URL": "URL máy chủ SCIM",
     "SSH host": "Máy chủ SSH",
     "SSH host key": "Khóa máy chủ SSH",

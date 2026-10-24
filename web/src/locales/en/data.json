@@ -1587,6 +1587,8 @@
   },
   "syncer": {
     "API Token / Password": "API Token / Password",
+    "API endpoint": "API endpoint",
+    "API endpoint - Tooltip": "Lark Open Platform API endpoint. Leave empty for Lark international (https://open.larksuite.com); Feishu China tenants must set https://open.feishu.cn",
     "AWS Access Key ID": "AWS Access Key ID",
     "AWS Region": "AWS Region",
     "AWS Secret Access Key": "AWS Secret Access Key",
@@ -1616,6 +1618,8 @@
     "Is read-only - Tooltip": "When enabled, data from this syncer source will only be read and not written back",
     "New Syncer": "New Syncer",
     "Paste your Google Workspace service account JSON key here": "Paste your Google Workspace service account JSON key here",
+    "Root department IDs": "Root department IDs",
+    "Root department IDs - Tooltip": "Departments to sync, including their sub-departments, separated by commas. Each one is an open_department_id (starting with od-) or a custom department ID. Leave empty to sync every department the Lark app can see. Listed departments must be within the app's contact permission scope. Departments are synced as groups. People outside these departments are treated as removed from the directory, and a read-only syncer forbids the accounts it created for them, so use \"Test Connection\" to check the IDs first",
     "SCIM Server URL": "SCIM Server URL",
     "SSH host": "SSH host",
     "SSH host key": "SSH host key",

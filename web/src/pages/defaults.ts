@@ -514,6 +514,7 @@ export function newSyncer(account: Account) {
     password: "123456",
     databaseType: "mysql",
     database: "dbName",
+    rootDepartmentIds: "",
     table: "table_name",
     tableColumns: [],
     affiliationTable: "",

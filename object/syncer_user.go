@@ -16,6 +16,7 @@ package object
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -105,7 +106,19 @@ func (syncer *Syncer) updateUserForOriginalFields(user *User, key string) (bool,
 	case "DingTalk":
 		columns = append(columns, "dingtalk")
 	case "Lark":
-		columns = append(columns, "lark")
+		columns = append(columns, "lark", "groups")
+		user.Groups = mergeLarkDepartmentGroups(oldUser.Groups, user.Groups)
+	}
+
+	// The group APIs read memberships from the user enforcer, not from the groups column. It is
+	// updated before the row so that a failure leaves the user to be retried by the next run, except
+	// on a rename, which waits for the row so that a name clash cannot rewrite another user's bindings.
+	isRenamed := syncer.Type == "Lark" && util.InSlice(columns, "name") && user.Name != oldUser.Name
+	if syncer.Type == "Lark" && !isRenamed {
+		err = updateSyncedUserGroupBindings(&oldUser, user, false)
+		if err != nil {
+			return false, err
+		}
 	}
 
 	affected, err := ormer.Engine.Where(key+" = ? and owner = ?", syncer.getUserValue(&oldUser, key), oldUser.Owner).Cols(columns...).Update(user)
@@ -113,7 +126,42 @@ func (syncer *Syncer) updateUserForOriginalFields(user *User, key string) (bool,
 		return false, err
 	}
 
+	if isRenamed && affected != 0 {
+		err = updateSyncedUserGroupBindings(&oldUser, user, true)
+		if err != nil {
+			return false, err
+		}
+	}
+
 	return affected != 0, nil
+}
+
+func updateSyncedUserGroupBindings(oldUser *User, user *User, isRenamed bool) error {
+	oldId := oldUser.GetId()
+	newId := oldId
+	if isRenamed {
+		newId = util.GetId(oldUser.Owner, user.Name)
+	}
+
+	if newId == oldId && isSameGroupSet(oldUser.Groups, user.Groups) {
+		return nil
+	}
+
+	if newId != oldId {
+		_, err := userEnforcer.DeleteGroupsForUser(oldId)
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err := userEnforcer.UpdateGroupsForUser(newId, user.Groups)
+	return err
+}
+
+func isSameGroupSet(a []string, b []string) bool {
+	a = slices.Compact(slices.Sorted(slices.Values(a)))
+	b = slices.Compact(slices.Sorted(slices.Values(b)))
+	return slices.Equal(a, b)
 }
 
 func (syncer *Syncer) calculateHash(user *OriginalUser) string {
@@ -123,6 +171,13 @@ func (syncer *Syncer) calculateHash(user *OriginalUser) string {
 		if tableColumn.IsHashed {
 			values = append(values, m[tableColumn.Name])
 		}
+	}
+
+	// Lark department moves must change the hash; users without departments keep their old hash
+	if syncer.Type == "Lark" && len(user.Groups) > 0 {
+		groups := slices.Clone(user.Groups)
+		slices.Sort(groups)
+		values = append(values, strings.Join(groups, ","))
 	}
 
 	s := strings.Join(values, "|")
